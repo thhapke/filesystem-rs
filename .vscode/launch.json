@@ -52,11 +52,11 @@
                     "--package=filesystem-rs"
                 ],
                 "filter": {
-                    "name": "filesystem-rs",
+                    "name": "list",
                     "kind": "bin"
                 }
             },
-            "args": ["./src"],
+            "args": ["./src","-m", "3"],
             "cwd": "${workspaceFolder}"
         },
 

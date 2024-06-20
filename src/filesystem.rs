@@ -208,12 +208,15 @@ impl FileSystem {
         self.list.extend(list_dirs);
     }
 
-    pub fn print_file_list(file_list: Vec<&str>) -> String {
+    pub fn print_file_list(file_list: Vec<&str>, max: Option<&usize>) -> String {
         let mut files = FileSystem::new();
         files.from_str_list(file_list);
         files.unfold();
         let mut g = files.build_graph();
         g.find_sources(); 
+        if let Some(max_level) = max {
+            g.set_max_display_level(max_level);
+        }
         format!("{}",g)
     }
 

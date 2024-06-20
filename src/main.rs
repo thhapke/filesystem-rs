@@ -18,14 +18,14 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let app = args::parse_cli_arguments();
     let matches = app.try_get_matches_from(args).unwrap_or_else(|e| {e.exit();});
-  
+    let max_level =  matches.get_one::<usize>("max");
+    
     // List of files with path
     let root_dir = matches.get_one::<String>("path").expect("Argument \"Path\" required!");
     let files_list = list_files_recursively(&PathBuf::from(&root_dir));
     let files_list_str = files_list.iter().filter_map(|p| p.to_str()).collect();
     
-    
-    let output = FileSystem::print_file_list(files_list_str);
+    let output = FileSystem::print_file_list(files_list_str, max_level);
     println!("{}",output);
 }
 

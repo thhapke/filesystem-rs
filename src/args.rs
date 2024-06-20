@@ -1,7 +1,7 @@
 use std::env;
 use clap::{Arg, Command};
 
-pub const PROGRAM_NAME: &str = "filesystem-rs";
+pub const PROGRAM_NAME: &str = "list";
 
 pub fn parse_cli_arguments() -> Command {
     Command::new(PROGRAM_NAME)
@@ -14,4 +14,9 @@ pub fn parse_cli_arguments() -> Command {
         .arg(Arg::new("path")
             .help("path")
             .index(1))
+        .arg(Arg::new("max")
+                .short('m')
+                .long("max")
+                .value_parser(clap::value_parser!(usize))
+                .help("Maximum number of directory levels displayed"))
 }
