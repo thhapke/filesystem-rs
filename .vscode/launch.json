@@ -7,34 +7,34 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'filesystem-rs'",
+            "name": "Debug executable 'filesystem'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=filesystem-rs",
-                    "--package=filesystem-rs"
+                    "--bin=list",
+                    "--package=filesystem"
                 ],
                 "filter": {
-                    "name": "filesystem-rs",
+                    "name": "list",
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": ["."],
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'filesystem-rs'",
+            "name": "Debug unit tests in executable 'filesystem'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=filesystem-rs",
-                    "--package=filesystem-rs"
+                    "--bin=list",
+                    "--package=filesystem"
                 ],
                 "filter": {
-                    "name": "filesystem-rs",
+                    "name": "list",
                     "kind": "bin"
                 }
             },
@@ -49,7 +49,7 @@
                 "args": [
                     "build",
                     "--bin=list",
-                    "--package=filesystem-rs"
+                    "--package=filesystem"
                 ],
                 "filter": {
                     "name": "list",
