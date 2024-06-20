@@ -4,3 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+termprint = {path = "/Users/D051079/GitHub/rust/termprint"}
+graph = {path = "/Users/D051079/GitHub/rust/graph"}
+chrono = "0.4.38"
+bytes = "1.6.0"
+clap = "4.5.7"
+
+[[bin]]
+name = "list"
+path = "src/main.rs"
