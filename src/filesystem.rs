@@ -1,24 +1,38 @@
+
 use std::{fmt,fs,io};
 use std::hash::{Hash, Hasher};
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::io::{BufReader,Read};
 use chrono::{DateTime};
-use termprint as tp;
+// use termprint as tp;
 use bytes::Bytes;
 use std::time::SystemTime;
+use snafu::Snafu;
+use colored::Colorize;
 
-// use time::{OffsetDateTime};
+use log::debug;
 
-// use crate::graph::{Graph,GraphBuilder};
+
 use graph::{Graph,GraphBuilder};
+use termprint as tp;
+
+pub const SHORT: usize = 30;
+
+#[derive(Debug, Snafu)]
+pub enum Error {
+    #[snafu(display("Root directory does not match with path: {} -> {}", root,path))]
+    NoRootPath{root:String, path:String},
+}
+
+type Result<T, E = Error> = std::result::Result<T, E>;
 
 
 #[derive(Debug, Clone, Eq)]
 pub struct FileContent {
     pub name: String,
-    pub path: String,
-    pub parent: Option<String>,
+    pub path: PathBuf,
+    pub parent: Option<PathBuf>,
     pub length: usize,
     pub content_type: ContentType,
     pub e_tag: Option<String>,
@@ -54,11 +68,11 @@ impl fmt::Display for ContentType {
 }
 
 impl FileContent {
-    pub fn new(path: &str, length:usize, content_type: ContentType) -> Self {
+    pub fn new(path: &PathBuf, parent: Option<PathBuf>,length:usize, content_type: ContentType) -> Self {
         FileContent {
-            path: path.to_string(), 
-            name: FileContent::basename(&path),
-            parent: FileContent::parent_folder(&path),
+            path: path.clone(), 
+            name: FileContent::get_name(path),
+            parent: parent,
             length: length,
             content_type: content_type,
             e_tag: None,
@@ -67,48 +81,13 @@ impl FileContent {
         }
     }
 
-    pub fn unfold(&self) -> HashSet<FileContent> {
-        let mut fc_set = HashSet::<FileContent>::new();
-        let fc = FileContent::new(&self.path, self.length, self.content_type);
-        //println!("---- {} ----->",&fc.path);
-        fc_set.insert(fc);
-
-        let path = match self.path.chars().nth(0).unwrap() {
-            '/' => {
-                let fc = FileContent::new("/", 0, ContentType::DIRECTORY);
-                //println!("{}",&fc.path);
-                fc_set.insert(fc);
-                let (_, path) = self.path.split_at(1);
-                path
-            },
-            _ => &self.path,
-        };
-        let folders: Vec<&str> = path.split("/").collect();
-        for n in  1..folders.len() {
-            let new_path = folders[0..n].join("/");           
-            let fc = FileContent::new(&new_path, 0, ContentType::DIRECTORY);
-            //println!("{}",&fc.path);
-            fc_set.insert(fc);
-        }
-        fc_set
-    }
-
-    pub fn basename(path: &str)-> String {
-        match path.rsplit_once("/") {
-            Some((_,basename)) => basename.to_string(),
-            None => path.to_string(),
+    pub fn get_name(path: &PathBuf) -> String {
+        match path.file_name() {
+            None => path.to_string_lossy().to_string(),
+            Some(p) => p.to_string_lossy().to_string(),
         }
     }
-
-    pub fn parent_folder(path: &str) -> Option<String> {
-        match path.rsplit_once("/") {
-            Some((parent,_)) => Some(parent.to_string()),
-            None => None
-        }
-    }
-
 }
-
 
 impl PartialEq for FileContent {
     fn eq(&self, other: &FileContent) -> bool {
@@ -129,10 +108,11 @@ impl fmt::Display for FileContent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let width:usize = 20;
         tp::write_title(f, "\nFile Content");
-        writeln!(f, "{}", &tp::info("Path: ", &self.path,Some(width)))?;
+        writeln!(f, "{}", &tp::info("Path: ", &self.path.to_string_lossy(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Type: ", &self.content_type.to_string(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Name: ", &self.name,Some(width)))?;
-        writeln!(f, "{}", &tp::info("Parent: ", &self.parent.clone().unwrap_or("".to_string()),Some(width)))?;
+        let parent = &self.parent.as_ref().map(|p| p.to_string_lossy().into_owned()).unwrap_or_else(|| "".to_string());
+        writeln!(f, "{}", &tp::info("Parent: ", parent,Some(width)))?;
         writeln!(f, "{}", &tp::info("Length: ", &self.length.to_string(),Some(width)))?;
         writeln!(f, "{}", &tp::info("eTag: ", &self.e_tag.clone().unwrap_or("".to_string()),Some(width)))?;
         let dt = DateTime::from_timestamp(self.modification_time/1000, ((self.modification_time % 1_000) * 1_000_000 )as u32);
@@ -151,22 +131,81 @@ impl fmt::Display for FileContent {
 
 #[derive(Debug, Clone)]
 pub struct FileSystem  {
+    pub root: Option<PathBuf>,
     pub list: HashSet::<FileContent>,
 }
 
 impl FileSystem {
     pub fn new() -> FileSystem {
-        FileSystem{list: HashSet::<FileContent>::new()}
-    }
-
-    pub fn add(&mut self, path: &str, length: usize, content_type: ContentType) {
-        self.list.extend(FileContent::new(path,length,content_type).unfold());
-    }
-
-    pub fn from_str_list(&mut self, files: Vec<&str>) {
-        for f in files {
-            self.add(f,0,ContentType::FILE);
+        FileSystem{
+            root: None,
+            list: HashSet::<FileContent>::new()
         }
+    }
+
+    pub fn set_root(&mut self,path: &PathBuf) {
+        self.root = Some(path.clone());
+        self.list.insert(FileContent::new(path,None, 0,ContentType::DIRECTORY));
+    }
+
+    pub fn add(&mut self, path: &PathBuf, length: usize, content_type: ContentType) -> bool {
+        // test if path is root then do not add
+        if let Some(r) = &self.root {
+            if r == path {
+                return false;
+            }
+        }
+        let parent = path.parent().map(PathBuf::from);
+        let fc = FileContent::new(path,parent.clone(), length,content_type);
+        self.list.insert(fc);
+        // unfolding
+        if let Some(ppath) = parent { 
+            self.add(&ppath, 0, ContentType::DIRECTORY);
+        }
+        true
+    }
+
+    pub fn from_str_list(&mut self, files: Vec<String>, root: Option<&PathBuf>)  {
+        debug!("Build Filesystem data structure");
+        let start_time = std::time::Instant::now();
+        match root {
+            Some(r) => {
+                self.set_root(r);
+                debug!("Set root: {:?}",r)
+            },   
+            None => {
+                let mut common_root = PathBuf::from(files[0].clone());
+
+                for path_str in &files[1..] {
+                    let path = PathBuf::from(path_str);
+                    // Truncate common_root to the common prefix with the current path
+                    common_root = common_root
+                        .components()
+                        .zip(path.components())
+                        .take_while(|(a, b)| a == b)
+                        .map(|(a, _)| a)
+                        .collect();
+                    // If the common root becomes empty, there is no common path
+                    if common_root.as_os_str().is_empty() {
+                        break;
+                    }
+                }
+                match common_root.as_os_str().is_empty() {
+                    true => {
+                        debug!("No root");
+                        self.root = None;
+                    },
+                    false => {
+                        self.set_root(&common_root);
+                        debug!("Root path: {}",&common_root.to_string_lossy());
+                    },
+                }
+            }
+        };
+        for f in files {
+            self.add(&PathBuf::from(f),0,ContentType::FILE);
+        };
+        debug!("-> Elapsed Time: {:?} for #files: {}",start_time.elapsed(),self.list.len());
     }
 
     pub fn get_local_files(&mut self, root: &PathBuf) {
@@ -185,7 +224,8 @@ impl FileSystem {
                         Ok(file_type) => {
                             if file_type.is_file() {
                                 if let Ok(metadata) = fs::metadata(&entry.path()) {
-                                    let mut fc = FileContent::new(&entry.path().to_str().unwrap(), metadata.len() as usize, ContentType::FILE);
+                                    let path = entry.path();
+                                    let mut fc = FileContent::new(&path,path.parent().map(PathBuf::from), metadata.len() as usize, ContentType::FILE);
                                     fc.access_time = (metadata.accessed().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() * 1000) as i64;
                                     fc.modification_time = (metadata.modified().unwrap().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() * 1000) as i64;
                                     self.list.insert(fc);
@@ -200,24 +240,28 @@ impl FileSystem {
         }
     }
 
-    pub fn unfold(&mut self) {
-        let mut list_dirs = HashSet::<FileContent>::new();
-        for fc in self.list.iter() {
-            list_dirs.extend(fc.unfold());
-        }
-        self.list.extend(list_dirs);
-    }
-
-    pub fn print_file_list(file_list: Vec<&str>, max: Option<&usize>) -> String {
+    pub fn print_file_list(file_list: Vec<String>, max: Option<&usize>, root:Option<&PathBuf>) -> String {
         let mut files = FileSystem::new();
-        files.from_str_list(file_list);
-        files.unfold();
-        let mut g = files.build_graph();
-        g.find_sources(); 
-        if let Some(max_level) = max {
-            g.set_max_display_level(max_level);
+        files.from_str_list(file_list, root);
+        match files.root.clone() {
+            None => format!("No root for printing as tree!"),
+            Some(r) => {
+                let mut g = files.build_graph();
+                let root_name = r.to_string_lossy().to_string();
+                match g.byname.get(&root_name) {
+                    None => format!("Root node not found!"),
+                    Some(rnode) => {
+                        g.nodes[rnode.clone()].label = root_name.clone();
+                        g.add_sources(rnode.clone());
+                        if let Some(max_level) = max {
+                            g.set_max_display_level(max_level);
+                        }
+                        let summary = format!("{:═<SHORT$}\n{} {}\n{:═<SHORT$}", "".blue(),"#files:".blue(),files.list.len().to_string().cyan(),"".blue());
+                        format!("{}\n{}",g,summary)
+                    },
+                }
+            },
         }
-        format!("{}",g)
     }
 
 }
@@ -226,7 +270,6 @@ impl FileSystem {
 impl IntoIterator for FileSystem {
     type Item = FileContent;
     type IntoIter = std::collections::hash_set::IntoIter<FileContent>;
-
     fn into_iter(self) -> Self::IntoIter {
         self.list.into_iter()
     }
@@ -235,28 +278,30 @@ impl IntoIterator for FileSystem {
 impl From<Vec<FileContent>> for FileSystem {
     fn from(fc_list: Vec<FileContent>) -> Self {
         let mut file_system = FileSystem::new();
-        for fc in fc_list.into_iter() {
-            file_system.list.extend(fc.unfold())
-        }
+        file_system.list.extend(fc_list);
         file_system
     }
 }
 
 impl GraphBuilder<FileContent> for FileSystem {
     fn build_graph(&self) -> Graph<FileContent> {
+        debug!("Build Graph");
+        let start_time = std::time::Instant::now();
+
         let mut g: Graph<FileContent> = Graph::new();
         for fc in self.list.clone(){
             let path = fc.path.clone();
             let name = fc.name.clone();
-            g.add_node(&path, &name, fc);
+            g.add_node(&path.to_string_lossy().to_string(), &name, fc);
         }
         for fc in self.list.clone() {
             if let Some(parent) = fc.parent.clone() {
-                if let Err(e) = g.add_edge_byname(&parent, &fc.path){
+                if let Err(e) = g.add_edge_byname(&parent.to_string_lossy().to_string(), &fc.path.to_string_lossy().to_string()){
                     print!("Error: {}", e);
                 }
             }
         }
+        debug!("- Elapsed Time: {:?} for #nodes: {}",start_time.elapsed(),g.nodes.len());
         g
     }
 }

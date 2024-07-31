@@ -4,11 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-termprint = {path = "/Users/D051079/GitHub/rust/termprint"}
-graph = {path = "/Users/D051079/GitHub/rust/graph"}
+# termprint = {path = "/Users/D051079/GitHub/rust/termprint"}
+# graph = {path = "/Users/D051079/GitHub/rust/graph"}
 chrono = "0.4.38"
 bytes = "1.6.0"
 clap = "4.5.7"
+snafu = "0.8.3"
+log = "0.4.21"
+env_logger = "0.11.3"
+colored = "2.1.0"
+time = "0.3.36"
+object_store = "0.10.1"
+termprint = {path = "/Users/D051079/GitHub/rust/termprint", features = ["truecolor"]}
+graph = {path = "/Users/D051079/GitHub/rust/graph"}
 
 [[bin]]
 name = "list"
