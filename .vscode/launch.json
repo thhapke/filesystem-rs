@@ -19,6 +19,9 @@
                     "kind": "bin"
                 }
             },
+            "env": {
+                "RUST_LOG": "info"
+            },
             "args": ["."],
             "cwd": "${workspaceFolder}"
         },
@@ -56,7 +59,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["./src","-m", "3"],
+            "args": ["/Users/D051079/GitHub/rust/filesystem","-m", "4"],
             "cwd": "${workspaceFolder}"
         },
 
