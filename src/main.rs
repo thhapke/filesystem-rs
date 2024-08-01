@@ -1,16 +1,15 @@
 use std::path::PathBuf;
 use std::env;
+use snafu::{ResultExt, Snafu};
+use log::{LevelFilter,debug};
 
-mod filesystem;
-mod args;
 use graph;
 use termprint as tp;
 
-use snafu::{ResultExt, Snafu};
+mod args;
 
-use filesystem::{FileSystem};
-
-use log::{LevelFilter,debug};
+mod filesystem;
+use filesystem::FileSystem;
 
 #[derive(Debug, Snafu)]
 pub enum Error {

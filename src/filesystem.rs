@@ -107,7 +107,7 @@ impl fmt::Display for FileContent {
     // }
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let width:usize = 20;
-        tp::write_title(f, "\nFile Content");
+        tp::write_title(f, "\nFile Content")?;
         writeln!(f, "{}", &tp::info("Path: ", &self.path.to_string_lossy(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Type: ", &self.content_type.to_string(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Name: ", &self.name,Some(width)))?;
