@@ -1,1 +1,9 @@
-/target
+# Local Mac
+.DS_Store
+
+# Rust
+target/
+
+Cargo.lock
+
+**/*.rs.bk%                                                                                                                                                                 

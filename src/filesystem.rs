@@ -25,7 +25,7 @@ pub enum Error {
     NoRootPath{root:String, path:String},
 }
 
-type Result<T, E = Error> = std::result::Result<T, E>;
+// type Result<T, E = Error> = std::result::Result<T, E>;
 
 
 #[derive(Debug, Clone, Eq)]
@@ -40,6 +40,7 @@ pub struct FileContent {
     pub access_time: i64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum ContentType {
     DIRECTORY,
@@ -52,6 +53,7 @@ impl ContentType {
         match content_type {
             "DIRECTORY" => ContentType::DIRECTORY,
             "FILE" => ContentType::FILE,
+            "UNKNOWN" => ContentType::UNKNOWN,
             _ => ContentType::UNKNOWN,
         }
     }
@@ -107,7 +109,7 @@ impl fmt::Display for FileContent {
     // }
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let width:usize = 20;
-        tp::write_title(f, "\nFile Content")?;
+        tp::write_title(f, "\nFile Content");
         writeln!(f, "{}", &tp::info("Path: ", &self.path.to_string_lossy(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Type: ", &self.content_type.to_string(),Some(width)))?;
         writeln!(f, "{}", &tp::info("Name: ", &self.name,Some(width)))?;
@@ -291,8 +293,11 @@ impl GraphBuilder<FileContent> for FileSystem {
         let mut g: Graph<FileContent> = Graph::new();
         for fc in self.list.clone(){
             let path = fc.path.clone();
-            let name = fc.name.clone();
-            g.add_node(&path.to_string_lossy().to_string(), &name, fc);
+            let mut label = fc.name.clone();
+            if fc.content_type == ContentType::FILE {
+                label = format!("{} ({})",fc.name,data_volume_str(fc.length));
+            }
+            g.add_node(&path.to_string_lossy().to_string(), &label, fc);
         }
         for fc in self.list.clone() {
             if let Some(parent) = fc.parent.clone() {
@@ -340,7 +345,7 @@ pub fn data_volume_str(num_bytes: usize) -> String {
         x if x > 1073742000 => format!("{} GB",num_bytes/1073742000),
         x if x > 1048576 => format!("{} MB",num_bytes/1048576),
         x if x > 1024 => format!("{} kB",num_bytes/1024), 
-        _ => format!("{} Byte",num_bytes),
+        _ => format!("{} B",num_bytes),
     }
 }
 

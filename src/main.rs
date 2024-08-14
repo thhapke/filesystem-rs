@@ -1,10 +1,6 @@
 use std::path::PathBuf;
 use std::env;
-use snafu::{ResultExt, Snafu};
-use log::{LevelFilter,debug};
-
-use graph;
-use termprint as tp;
+use snafu::Snafu;
 
 mod args;
 
@@ -19,15 +15,13 @@ pub enum Error {
     FileListError{source: filesystem::Error},
 }
 
-type Result<T, E = Error> = std::result::Result<T, E>;
-
 fn list_files_recursively(root_dir: &PathBuf) -> Vec<PathBuf> {
     let mut files = Vec::new();
     filesystem::get_files(&mut files, root_dir);
     files
 }
 
-fn main() -> Result<()> {
+fn main() {
 
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
@@ -45,6 +39,5 @@ fn main() -> Result<()> {
     
     let output = FileSystem::print_file_list(files_list_str, max_level, Some(&PathBuf::from(root_dir)));
     println!("{}",output);
-    Ok(())
 }
 
