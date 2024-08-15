@@ -138,7 +138,7 @@ pub struct FileSystem {
 
 impl fmt::Display for FileSystem {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut g = self.build_graph();
+        let g = self.build_graph();
         writeln!(f, "{}", g)?;
         Ok(())
     }

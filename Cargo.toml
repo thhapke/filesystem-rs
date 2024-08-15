@@ -16,7 +16,7 @@ colored = "2.1.0"
 time = "0.3.36"
 object_store = "0.10.2"
 termprint = {git = "https://github.tools.sap/D051079/termprint.git", features = ["basic"]}
-graph = {git = "https://github.tools.sap/D051079/graph.git"}
+graph = {git = "https://github.tools.sap/D051079/graph"}
 
 [[bin]]
 name = "list"
