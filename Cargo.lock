@@ -474,6 +474,7 @@ checksum = "40ecd4077b5ae9fd2e9e169b102c6c330d0605168eb0e8bf79952b256dbefffd"
 [[package]]
 name = "graph"
 version = "0.1.0"
+source = "git+https://github.tools.sap/D051079/graph.git#86b7d0282070b3d5946c74517b31288abc5e467d"
 dependencies = [
  "colored",
 ]
@@ -691,9 +692,9 @@ checksum = "f8478577c03552c21db0e2724ffb8986a5ce7af88107e6be5d2ee6e158c12800"
 
 [[package]]
 name = "itertools"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]
@@ -822,9 +823,9 @@ dependencies = [
 
 [[package]]
 name = "object_store"
-version = "0.10.1"
+version = "0.10.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbebfd32c213ba1907fa7a9c9138015a8de2b43e30c5aa45b18f7deb46786ad6"
+checksum = "e6da452820c715ce78221e8202ccc599b4a52f3e1eb3eedb487b680c81a8e3f3"
 dependencies = [
  "async-trait",
  "bytes",
@@ -1384,6 +1385,7 @@ dependencies = [
 [[package]]
 name = "termprint"
 version = "0.1.0"
+source = "git+https://github.tools.sap/D051079/termprint.git#06f692a28485bdadfb05342a1189e0b332e07097"
 dependencies = [
  "colored",
  "reqwest",

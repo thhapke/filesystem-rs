@@ -59,9 +59,28 @@
                     "kind": "bin"
                 }
             },
-            "args": ["/Users/D051079/GitHub/rust/filesystem","-m", "4"],
+            "args": ["/Users/D051079/GitHub/rust/filesystem/src","-m", "4"],
             "cwd": "${workspaceFolder}"
         },
-
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "list (release)",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--release",
+                    "--bin=list",
+                    "--package=filesystem"
+                ],
+                "filter": {
+                    "name": "list",
+                    "kind": "bin"
+                }
+            },
+            "args": ["/Users/D051079/GitHub/rust/filesystem", "-m", "4"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Build Release" // Add this line
+        },         // Existing configurations..
     ]
 }

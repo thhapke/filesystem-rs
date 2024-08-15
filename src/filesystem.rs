@@ -11,8 +11,7 @@ use std::time::SystemTime;
 use snafu::Snafu;
 use colored::Colorize;
 
-use log::debug;
-
+use log::{debug,error};
 
 use graph::{Graph,GraphBuilder};
 use termprint as tp;
@@ -132,9 +131,17 @@ impl fmt::Display for FileContent {
 }
 
 #[derive(Debug, Clone)]
-pub struct FileSystem  {
+pub struct FileSystem {
     pub root: Option<PathBuf>,
-    pub list: HashSet::<FileContent>,
+    pub list: HashSet<FileContent>,
+}
+
+impl fmt::Display for FileSystem {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut g = self.build_graph();
+        writeln!(f, "{}", g)?;
+        Ok(())
+    }
 }
 
 impl FileSystem {
@@ -210,6 +217,32 @@ impl FileSystem {
         debug!("-> Elapsed Time: {:?} for #files: {}",start_time.elapsed(),self.list.len());
     }
 
+    pub fn from_local(root_dir: &PathBuf) -> Self {
+        let mut fs = FileSystem::new();
+
+        match fs::metadata(root_dir) {
+            Err(_) => {
+                error!("Do not get metadata information of {}",root_dir.to_string_lossy());
+                return fs;
+            },
+            Ok(metadata) => {
+                if metadata.is_file() {
+                    let fc = FileContent::new(root_dir,None, metadata.len() as usize, ContentType::FILE);
+                    fs.list.insert(fc);
+                    return fs;
+                }
+                else if metadata.is_dir() {
+                    fs.set_root(root_dir);
+                    fs.get_local_files(root_dir);
+                    return fs;
+                }
+                else {
+                    return fs;
+                }
+            }
+        }
+    }
+
     pub fn get_local_files(&mut self, root: &PathBuf) {
         let entries = match fs::read_dir(root) {
             Err(e) => {println!("Error reading folder. ({})",e.to_string()); return },
@@ -269,11 +302,11 @@ impl FileSystem {
 }
 
 // In src/filesystem.rs
-impl IntoIterator for FileSystem {
-    type Item = FileContent;
-    type IntoIter = std::collections::hash_set::IntoIter<FileContent>;
+impl <'a> IntoIterator for &'a FileSystem {
+    type Item = &'a FileContent;
+    type IntoIter = std::collections::hash_set::Iter<'a, FileContent>;
     fn into_iter(self) -> Self::IntoIter {
-        self.list.into_iter()
+        self.list.iter()
     }
 }
 
@@ -307,6 +340,7 @@ impl GraphBuilder<FileContent> for FileSystem {
             }
         }
         debug!("- Elapsed Time: {:?} for #nodes: {}",start_time.elapsed(),g.nodes.len());
+        g.find_sources();
         g
     }
 }

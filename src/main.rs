@@ -6,6 +6,7 @@ mod args;
 
 mod filesystem;
 use filesystem::FileSystem;
+use graph::graph::GraphBuilder;
 
 #[derive(Debug, Snafu)]
 pub enum Error {
@@ -38,6 +39,19 @@ fn main() {
     let files_list_str = files_list.iter().map(|p| p.display().to_string()).collect();
     
     let output = FileSystem::print_file_list(files_list_str, max_level, Some(&PathBuf::from(root_dir)));
-    println!("{}",output);
+    // println!("{}",output);
+
+    let fs = FileSystem::from_local(&PathBuf::from(root_dir));
+
+    // for f in &fs {
+    //     println!("{}", f.path.display());
+    // }
+
+
+    println!("{fs}");
+    // println!("{}", fs);
+    
+
+
 }
 
