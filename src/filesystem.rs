@@ -1,5 +1,6 @@
 
 use std::{fmt,fs,io};
+use std::cmp::max;
 use std::hash::{Hash, Hasher};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -38,6 +39,9 @@ pub struct FileContent {
     pub modification_time: i64,
     pub access_time: i64,
 }
+
+
+
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -88,6 +92,14 @@ impl FileContent {
             Some(p) => p.to_string_lossy().to_string(),
         }
     }
+
+    pub fn num_parents(&self) -> usize {
+        match &self.parent {
+            None => 0,
+            Some(p) => p.ancestors().count()-1,
+        }
+    }
+
 }
 
 impl PartialEq for FileContent {
@@ -155,6 +167,10 @@ impl FileSystem {
     pub fn set_root(&mut self,path: &PathBuf) {
         self.root = Some(path.clone());
         self.list.insert(FileContent::new(path,None, 0,ContentType::DIRECTORY));
+    }
+
+    pub fn max_depth(&self) -> usize {
+        self.list.iter().fold(0, |acc, fc| {std::cmp::max(acc,fc.num_parents())})
     }
 
     pub fn add(&mut self, path: &PathBuf, length: usize, content_type: ContentType) -> bool {
