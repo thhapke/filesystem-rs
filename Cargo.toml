@@ -4,8 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# termprint = {path = "/Users/D051079/GitHub/rust/termprint"}
-# graph = {path = "/Users/D051079/GitHub/rust/graph"}
 chrono = "0.4.38"
 bytes = "1.6.0"
 clap = "4.5.7"
@@ -15,8 +13,12 @@ env_logger = "0.11.3"
 colored = "2.1.0"
 time = "0.3.36"
 object_store = "0.10.2"
-termprint = {git = "https://github.tools.sap/D051079/termprint.git", features = ["basic"]}
-graph = {git = "https://github.tools.sap/D051079/graph"}
+# termprint = {path = "/Users/D051079/GitHub/rust/termprint"}
+termprint = { git = "https://github.tools.sap/D051079/termprint.git", features = [
+    "basic",
+] }
+# graph = {path = "/Users/D051079/GitHub/rust/graph
+graph = { git = "https://github.tools.sap/D051079/graph" }
 
 [[bin]]
 name = "list"
