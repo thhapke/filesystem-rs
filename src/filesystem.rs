@@ -119,36 +119,20 @@ impl fmt::Display for FileContent {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let width: usize = 20;
         tp::write_title(f, "\nFile Content");
-        writeln!(
-            f,
-            "{}",
-            &tp::info("Path: ", &self.path.to_string_lossy(), Some(width))
-        )?;
-        writeln!(
-            f,
-            "{}",
-            &tp::info("Type: ", &self.content_type.to_string(), Some(width))
-        )?;
-        writeln!(f, "{}", &tp::info("Name: ", &self.name, Some(width)))?;
+        writeln!(f, "{}", &tp::info("Path: ", &self.path.to_string_lossy()))?;
+        writeln!(f, "{}", &tp::info("Type: ", &self.content_type.to_string()))?;
+        writeln!(f, "{}", &tp::info("Name: ", &self.name))?;
         let parent = &self
             .parent
             .as_ref()
             .map(|p| p.to_string_lossy().into_owned())
             .unwrap_or_else(|| "".to_string());
-        writeln!(f, "{}", &tp::info("Parent: ", parent, Some(width)))?;
+        writeln!(f, "{}", &tp::info("Parent: ", parent,))?;
+        writeln!(f, "{}", &tp::info("Length: ", &self.length.to_string()))?;
         writeln!(
             f,
             "{}",
-            &tp::info("Length: ", &self.length.to_string(), Some(width))
-        )?;
-        writeln!(
-            f,
-            "{}",
-            &tp::info(
-                "eTag: ",
-                &self.e_tag.clone().unwrap_or("".to_string()),
-                Some(width)
-            )
+            &tp::info("eTag: ", &self.e_tag.clone().unwrap_or("".to_string()))
         )?;
         let dt = DateTime::from_timestamp(
             self.modification_time / 1000,
@@ -163,16 +147,12 @@ impl fmt::Display for FileContent {
             writeln!(
                 f,
                 "{}",
-                &tp::info("Modification time: ", &dtime.to_string(), Some(width))
+                &tp::info("Modification time: ", &dtime.to_string())
             )?;
         };
         if let Some(dtime) = dta {
             // let dta = OffsetDateTime::from_unix_timestamp(self.modification_time/1000).unwrap();
-            write!(
-                f,
-                "{}",
-                &tp::info("Access time: ", &dtime.to_string(), Some(width))
-            )?;
+            write!(f, "{}", &tp::info("Access time: ", &dtime.to_string()))?;
         };
         Ok(())
     }
