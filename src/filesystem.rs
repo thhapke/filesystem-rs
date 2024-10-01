@@ -1,6 +1,5 @@
 
 use std::{fmt,fs,io};
-use std::cmp::max;
 use std::hash::{Hash, Hasher};
 use std::collections::HashSet;
 use std::path::PathBuf;
